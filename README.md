@@ -23,10 +23,10 @@ Zipwyn lets users sign in, create short links (with optional custom codes), view
 everything from a dashboard. Under the hood it is split into two independently deployable parts that share one DynamoDB
 data layer:
 
-| Part                   | Path                       | Runs on                  | Responsibility                                                                                      |
-|------------------------|----------------------------|--------------------------|-----------------------------------------------------------------------------------------------------|
-| **Web app**            | [`web`](web)               | Vercel                   | Landing site, OAuth sign-in, dashboard, authenticated REST API (`/api/urls`), SEO, security headers |
-| **Serverless backend** | [`serverless`](serverless) | AWS Lambda + API Gateway | Public short-link resolution (`302` redirects), click counting, small create/stats/list API         |
+| Part                   | Path                                                                | Runs on                  | Responsibility                                                                                      |
+|------------------------|---------------------------------------------------------------------|--------------------------|-----------------------------------------------------------------------------------------------------|
+| **Web app**            | [`web`](https://github.com/paradocx96/zipwyn-web.git)               | Vercel                   | Landing site, OAuth sign-in, dashboard, authenticated REST API (`/api/urls`), SEO, security headers |
+| **Serverless backend** | [`serverless`](https://github.com/paradocx96/zipwyn-serverless.git) | AWS Lambda + API Gateway | Public short-link resolution (`302` redirects), click counting, small create/stats/list API         |
 
 Splitting them keeps the latency-sensitive, spiky redirect path on cheap, auto-scaling serverless infrastructure while
 the product UI ships through Vercel's Git-driven workflow.
@@ -255,33 +255,6 @@ The production redirect domain `short.navindalc.app` is mapped to the HTTP API w
 - **Authorization** - every link operation checks that the signed-in user owns the record (`403` otherwise)
 - **Abuse controls** - per-user rate limit on link creation (`429` with `Retry-After`); optional Turnstile verification
 - **Secrets** - environment variables only; `.env*` and `.aws/` are git-ignored
-
-## Roadmap
-
-**Delivered**
-
-- [x] Serverless redirect backend defined as code
-- [x] Multi-stage deploys and custom domains
-- [x] Hardened headers, validation and rate limiting
-- [x] Git-driven web deployments on Vercel
-
-**Planned - platform & DevOps**
-
-- [ ] GitHub Actions CI for lint, type-check and build on every pull request
-- [ ] GitHub Actions CD for the serverless stack using AWS OIDC (no long-lived keys)
-- [ ] Replace static AWS keys in the web app with short-lived credentials (Vercel OIDC → IAM role)
-- [ ] Define all DynamoDB tables and indexes in one IaC stack, shared by both apps
-- [ ] CloudWatch alarms and dashboards (5xx, throttles, latency); structured logging
-- [ ] Custom domain and ACM certificate managed as code
-- [ ] Per-function least-privilege IAM and AWS WAF on the HTTP API
-- [ ] Distributed rate limiting (the current limiter is in-memory per instance)
-- [ ] Docker Compose with DynamoDB Local for one-command local development
-- [ ] Automated tests (validation unit tests, API integration tests)
-
-**Planned - product**
-
-- [ ] Billing and plan quota enforcement
-- [ ] Link expiration, bulk creation and richer analytics (referrers, geography, devices)
 
 ---
 
