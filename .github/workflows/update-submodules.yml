@@ -1,0 +1,90 @@
+name: Update Submodules
+
+on:
+  schedule:
+    - cron: '0 13 * * 1-5' # 6am US/Pacific on weekdays
+  workflow_dispatch:
+    inputs:
+      submodule:
+        description: 'Submodule to update (or "all")'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - web
+          - serverless
+  repository_dispatch:
+    types: [ submodule-updated ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Determine target
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "path=${{ github.event.client_payload.submodule }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.submodule }}" != "all" ]; then
+            echo "path=${{ inputs.submodule }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update submodule(s) to latest on their default branch
+        run: |
+          if [ -n "${{ steps.target.outputs.path }}" ]; then
+            git submodule update --remote --merge -- "${{ steps.target.outputs.path }}"
+          else
+            git submodule update --remote --merge
+          fi
+
+      - name: Check whether anything actually moved
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Summarize which commits each submodule is moving to
+        if: steps.changes.outputs.changed == 'true'
+        id: summary
+        run: |
+          {
+            echo "summary<<SUMMARY_EOF"
+            git diff --submodule=log
+            echo "SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open a PR with the updated pointers
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automated/submodule-update
+          commit-message: "chore: update submodule pointers"
+          title: "chore: update submodule pointers"
+          body: |
+            Automated submodule pointer update - triggered by
+            `${{ github.event_name }}`.
+
+            ```
+            ${{ steps.summary.outputs.summary }}
+            ```
+
+            Review the linked commits in each submodule before merging, same as any other dependency bump.
+          delete-branch: true
