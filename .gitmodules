@@ -1,0 +1,6 @@
+[submodule "web"]
+	path = web
+	url = https://github.com/paradocx96/zipwyn-web.git
+[submodule "serverless"]
+	path = serverless
+	url = https://github.com/paradocx96/zipwyn-serverless.git

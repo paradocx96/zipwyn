@@ -1,0 +1,7 @@
+packages:
+  - "web/*"
+  - "serverless/*"
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

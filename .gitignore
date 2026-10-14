@@ -1,0 +1,18 @@
+# Local environment overrides - never commit real values, even dev ones
+.env
+.env.local
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# This repo has no application code of its own - if you ever run something directly at the root (a script, a one-off
+# tool), keep its node_modules out of version control like everywhere else.
+node_modules/
+
+# Submodule directories are intentionally NOT listed here. Git manages them as gitlinks (special "commit" entries in
+# the index, not tracked file contents) automatically - adding them here would do nothing harmful, but it's also not
+# needed and can be confusing to read later.
