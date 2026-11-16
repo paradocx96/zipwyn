@@ -49,7 +49,7 @@ Built as a hands-on showcase of cloud and DevOps practices on a real, live produ
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     user([User / Browser])
 
     subgraph vercel["Vercel"]
